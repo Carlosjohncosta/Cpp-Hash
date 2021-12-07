@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="C++ test.cpp">
+    <ClCompile Include="C++ SHA-256.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
