@@ -1,11 +1,12 @@
 #include <iostream>
 #include <string.h>
+#include <math.h>
+
 using namespace std;
-class BinOps
-{
+class BinOps {
 public:
 	//Returns a pointer to an array of 8 bits.
-	static char** decToBin(long num) {
+	static char** decToBin(long long num) {
 		//Initialises number of bytes to be returned to 1.
 		int bytes = 1;
 
@@ -15,9 +16,9 @@ public:
 		//Sets 2d pointer to number of bytes (Plus extra terminator char).
 		char** output = new char* [bytes + 1];
 
-		//Allocates 8 chars per byte.
+		//Allocates 8 chars per byte (plus one for terminator).
 		for (int i = 0; i < bytes; i++) {
-			output[i] = new char[8];
+			output[i] = new char[9];
 		}
 
 		//Char 'f' is terminator.
@@ -37,6 +38,7 @@ public:
 
 			//Once bitIndex = 7 (8 digits long), we increment the byte index and set bitIndex to 0.
 			if (bitIndex == 7) {
+				output[byteIndex][8] = '\0';
 				byteIndex++;
 				bitIndex = 0;
 			}
@@ -47,9 +49,9 @@ public:
 		return output;
 	}
 
-	static long binToDec(char* input) {
+	static long long binToDec(char* input) {
 		int len = 0;
-		long output = 0;
+		long long output = 0;
 		while (input[len + 1] != '\0') len++;
 		for (int i = 0; i <= len; i++) {
 			if (input[i] == '1') {
@@ -59,20 +61,30 @@ public:
 		return output;
 	}
 
-	static char* addMod(char* arr1, char* arr2, long modNum = pow(2, 32)) {
+	static char* addMod(char* arr1, char* arr2, long long modNum = pow(2, 32)) {
 		//Converts binary to decimal.
-		long decNum = binToDec(arr1) + binToDec(arr2);
+		long long decNum = binToDec(arr1) + binToDec(arr2);
+
 		//Mod 32 of decNum
-		decNum %= modNum;
+		decNum = decNum % modNum;
+
 		//Gets binary from decNum.
 		char** converted = decToBin(decNum);
 		int len = 0;
 		while (converted[len][0] != '\0') len++;
+
+		//pads with '0' if converted < 4 bytes.
+		int startIndex = 0;
+		char* output = new char[33];
+
+		while (len < 4) {
+			for (int i = 0; i < 8; i++) { output[startIndex] = '0'; startIndex++;}
+			len++;
+		}
 		//Adds converted to output.
-		char* output = new char[(len * 8) + 1];
 		for (int i = 0; i < len; i++) {
 			for (int j = 0; j < 8; j++) {
-				output[(i * 8) + j] = converted[i][j];
+				output[(i * 8) + j + startIndex] = converted[i][j];
 			}
 		}
 		delete[] converted;
@@ -150,6 +162,7 @@ public:
 		return output;
 	}
 };
+
 class Sha256 : BinOps {
 public:
 	char* strIn;
@@ -233,13 +246,13 @@ public:
 		while (binArr[chunkNum * 64][0] != '\0') chunkNum++;
 
 		//Tripple pointer for output (Number of chunks, number of messages, 32 bits per message.) +1 for terminator.
-		char*** output = new char** [chunkNum + 1];
+		char*** output = new char** [chunkNum + 2];
 
 		//Allocates memory for output.
 		for (int i = 0; i < chunkNum; i++) {
 			output[i] = new char* [64];
 			for (int j = 0; j < 65; j++) {
-				output[i][j] = new char[] {"00000000000000000000000000000000"};
+				output[i][j] = new char[32];
 			}
 		}
 
@@ -256,6 +269,7 @@ public:
 					output[y][wordIndex][bitIndex] = binArr[i + (y * 64)][j];
 					//keeps track of output index.
 					if (bitIndex == 31) {
+						output[y][wordIndex][bitIndex + 1] = '\0';
 						bitIndex = 0;
 						wordIndex++;
 					}
@@ -276,23 +290,24 @@ public:
 		}
 
 		//debug
-		/*for (int y = 0; y < chunkNum; y++) {
+		for (int y = 0; y < chunkNum; y++) {
 			for (int i = 0; i < 64; i++) {
 				for (int j = 0; j < 32; j++) {
 					cout << output[y][i][j];
 				}
-				cout << '\n';
+				if (i % 2 == 0) cout << ' '; else cout << '\n';
 			}
 			cout << '\n';
-		}*/
+		}
 		return output;
 	}
 
 	void mutate(char** words) {
-		cout << addMod(new char[] {"01101000011001010110110001101100"}, new char[] {"11001110111000011001010111001011"});
 		for (int i = 16; i < 64; i++) {
-			;
-
+			//Mutates message values.
+			char* s0 = XOR(XOR(rotate(words[i - 15], 7), rotate(words[i - 15], 18)), shift(words[i - 15], 3));
+			char* s1 = XOR(XOR(rotate(words[i - 2], 17), rotate(words[i - 2], 19)), shift(words[i - 2], 10));
+			words[i] = addMod(words[i - 16], addMod(words[i - 7], addMod(s0, s1)));
 		}
 	}
 
@@ -305,6 +320,7 @@ public:
 
 int main()
 {
+
 	Sha256 test(new char[] {"hello world"});
 }
 
