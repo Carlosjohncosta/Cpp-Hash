@@ -27,7 +27,7 @@ public:
 		//Indexes for positions in byte and bit respectivily.
 		int byteIndex = 0;
 		int bitIndex = 0;
-		for (long i = (8 * bytes) - 1; i >= 0; i--) {
+		for (int i = (8 * bytes) - 1; i >= 0; i--) {
 			if (num >= pow(2, i)) {
 				output[byteIndex][bitIndex] = '1';
 				num -= pow(2, i);
@@ -87,6 +87,7 @@ public:
 				output[(i * 8) + j + startIndex] = converted[i][j];
 			}
 		}
+		//Deallocates pointers for converted.
 		delete[] converted;
 		output[len * 8] = '\0';
 		return output;
@@ -161,6 +162,28 @@ public:
 		output[len] = '\0';
 		return output;
 	}
+
+	static char* AND(char* arr1, char* arr2) {
+		int len = 0;
+		while (arr1[len] != '\0') len++;
+		char* output = new char[len + 1];
+		for (int i = 0; i < len; i++) {
+			if (arr1[i] == '1' && arr2[i] == '1') output[i] = '1'; else output[i] = '0';
+		}
+		output[len] = '\0';
+		return output;
+	}
+
+	static char* NOT(char* input) {
+		int len = 0;
+		while (input[len] != '\0') len++;
+		char* output = new char[len + 1];
+		for (int i = 0; i < len; i++) {
+			if (input[i] == '1') output[i] = '0'; else output[i] = '1';
+		}
+		output[len] = '\0';
+		return output;
+	}
 };
 
 class Sha256 : BinOps {
@@ -172,16 +195,15 @@ public:
 		hash();
 	}
 
-	class hashVals {
-	public:
-		string h0 = "0x6a09e667";
-		string h1 = "0xbb67ae85";
-		string h2 = "0x3c6ef372";
-		string h3 = "0xa54ff53a";
-		string h4 = "0x510e527f";
-		string h5 = "0x9b05688c";
-		string h6 = "0x1f83d9ab";
-		string h7 = "0x5be0cd19";
+	struct hashVals {
+		char a[33] = "01101010000010011110011001100111";
+		char b[33] = "10111011011001111010111010000101";
+		char c[33] = "00111100011011101111001101110010";
+		char d[33] = "10100101010011111111010100111010";
+		char e[33] = "01010001000011100101001001111111";
+		char f[33] = "10011011000001010110100010001100";
+		char g[33] = "00011111100000111101100110101011";
+		char h[33] = "01011011111000001100110100011001";
 	};
 
 	string* roundConsts = new string[]
@@ -290,7 +312,7 @@ public:
 		}
 
 		//debug
-		for (int y = 0; y < chunkNum; y++) {
+		/*for (int y = 0; y < chunkNum; y++) {
 			for (int i = 0; i < 64; i++) {
 				for (int j = 0; j < 32; j++) {
 					cout << output[y][i][j];
@@ -298,7 +320,7 @@ public:
 				if (i % 2 == 0) cout << ' '; else cout << '\n';
 			}
 			cout << '\n';
-		}
+		}*/
 		return output;
 	}
 
@@ -311,9 +333,25 @@ public:
 		}
 	}
 
+	hashVals* chunkLoop(char*** chunks) {
+		int chunkNum = 0;
+		while (chunks[chunkNum][0][0] = '\0') chunkNum++;
+		chunkNum++;
+		hashVals* output = new hashVals;
+		for (int i = 0; i < chunkNum; i++) {
+			for (int j = 0; j < 64; j++) {
+				char* s1 = XOR(rotate(output->e, 6), XOR(rotate(output->e, 25), rotate(output->e, 11)));
+				
+			}
+		}
+		cout << NOT(output->a);
+		return output;
+	}
+
 	char* hash() {
 		char** binArr = padding(strIn);
-		messages(binArr);
+		char*** chunks = messages(binArr);
+		hashVals* words = chunkLoop(chunks);
 		return new char[] {""};
 	}
 };
