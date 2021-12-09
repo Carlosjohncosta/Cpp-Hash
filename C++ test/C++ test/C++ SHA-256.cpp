@@ -1,8 +1,10 @@
 #include <iostream>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 using namespace std;
+
 class BinOps {
 public:
 	//Returns a pointer to an array of 8 bits.
@@ -61,6 +63,71 @@ public:
 		return output;
 	}
 
+	//Returns 32 bit binary string from hex string.
+	static char* hexToBin(string hex) {
+		char* output = new char[33];
+		char** temp = new char* [8];
+		for (int i = 2; i < 10; i++) {
+			switch (hex.at(i)) {
+			case '0':
+				temp[i - 2] = new char[] {"0000"};
+				break;
+			case '1':
+				temp[i - 2] = new char[] {"0001"};
+				break;
+			case '2':
+				temp[i - 2] = new char[] {"0010"};
+				break;
+			case '3':
+				temp[i - 2] = new char[] {"0011"};
+				break;
+			case '4':
+				temp[i - 2] = new char[] {"0100"};
+				break;
+			case '5':
+				temp[i - 2] = new char[] {"0101"};
+				break;
+			case '6':
+				temp[i - 2] = new char[] {"0110"};
+				break;
+			case '7':
+				temp[i - 2] = new char[] {"0111"};
+				break;
+			case '8':
+				temp[i - 2] = new char[] {"1000"};
+				break;
+			case '9':
+				temp[i - 2] = new char[] {"1001"};
+				break;
+			case 'a':
+				temp[i - 2] = new char[] {"1010"};
+				break;
+			case 'b':
+				temp[i - 2] = new char[] {"1011"};
+				break;
+			case 'c':
+				temp[i - 2] = new char[] {"1100"};
+				break;
+			case 'd':
+				temp[i - 2] = new char[] {"1101"};
+				break;
+			case 'e':
+				temp[i - 2] = new char[] {"1110"};
+				break;
+			case 'f':
+				temp[i - 2] = new char[] {"1111"};
+				break;
+			}
+		}
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 4; j++) {
+				output[(i * 4) + j] = temp[i][j];
+			}
+		}
+		output[32] = '\0';
+		return output;
+	}
+
 	static char* addMod(char* arr1, char* arr2, long long modNum = pow(2, 32)) {
 		//Converts binary to decimal.
 		long long decNum = binToDec(arr1) + binToDec(arr2);
@@ -77,19 +144,19 @@ public:
 		int startIndex = 0;
 		char* output = new char[33];
 
-		while (len < 4) {
+		for (int i = 0; i < 4 - len; i++) {
 			for (int i = 0; i < 8; i++) { output[startIndex] = '0'; startIndex++;}
-			len++;
 		}
 		//Adds converted to output.
 		for (int i = 0; i < len; i++) {
 			for (int j = 0; j < 8; j++) {
-				output[(i * 8) + j + startIndex] = converted[i][j];
+				output[startIndex] = converted[i][j];
+				startIndex++;
 			}
 		}
 		//Deallocates pointers for converted.
 		delete[] converted;
-		output[len * 8] = '\0';
+		output[startIndex] = '\0';
 		return output;
 	}
 
@@ -163,6 +230,7 @@ public:
 		return output;
 	}
 
+	//Bitwise AND.
 	static char* AND(char* arr1, char* arr2) {
 		int len = 0;
 		while (arr1[len] != '\0') len++;
@@ -174,6 +242,7 @@ public:
 		return output;
 	}
 
+	//Bitwise NOT.
 	static char* NOT(char* input) {
 		int len = 0;
 		while (input[len] != '\0') len++;
@@ -189,10 +258,11 @@ public:
 class Sha256 : BinOps {
 public:
 	char* strIn;
+	char* hash = new char[65];
 
 	Sha256(char* _strIn) {
 		strIn = _strIn;
-		hash();
+		hashAlg();
 	}
 
 	struct hashVals {
@@ -218,6 +288,9 @@ public:
 		"0x748f82ee", "0x78a5636f", "0x84c87814", "0x8cc70208", "0x90befffa", "0xa4506ceb", "0xbef9a3f7", "0xc67178f2"
 	};
 
+	~Sha256() {}
+
+protected:
 	static char** padding(char* str) {
 		//Gets size of string.
 		int strSize = 0;
@@ -312,7 +385,7 @@ public:
 		}
 
 		//debug
-		/*for (int y = 0; y < chunkNum; y++) {
+		for (int y = 0; y < chunkNum; y++) {
 			for (int i = 0; i < 64; i++) {
 				for (int j = 0; j < 32; j++) {
 					cout << output[y][i][j];
@@ -320,7 +393,7 @@ public:
 				if (i % 2 == 0) cout << ' '; else cout << '\n';
 			}
 			cout << '\n';
-		}*/
+		}
 		return output;
 	}
 
@@ -335,31 +408,78 @@ public:
 
 	hashVals* chunkLoop(char*** chunks) {
 		int chunkNum = 0;
-		while (chunks[chunkNum][0][0] = '\0') chunkNum++;
-		chunkNum++;
+		while (chunks[chunkNum][0][0] != '\0') chunkNum++;
 		hashVals* output = new hashVals;
+		hashVals* currHashVals = new hashVals;
 		for (int i = 0; i < chunkNum; i++) {
 			for (int j = 0; j < 64; j++) {
 				char* s1 = XOR(rotate(output->e, 6), XOR(rotate(output->e, 25), rotate(output->e, 11)));
-				
+				char* ch = XOR(AND(output->e, output->f), AND(NOT(output->e), output->g));
+				char* temp1 = addMod(output->h, addMod(s1, addMod(ch, addMod(chunks[i][j], hexToBin(roundConsts[j])))));
+				char* s0 = XOR(rotate(output->a, 2), XOR(rotate(output->a, 13), rotate(output->a, 22)));
+				char* maj = XOR(AND(output->a, output->b), XOR(AND(output->a, output->c), AND(output->b, output->c)));
+				char* temp2 = addMod(s0, maj);
+				strcpy_s(output->h, output->g);
+				strcpy_s(output->g, output->f);
+				strcpy_s(output->f, output->e);
+				strcpy_s(output->e, addMod(output->d, temp1));
+				strcpy_s(output->d, output->c);
+				strcpy_s(output->c, output->b);
+				strcpy_s(output->b, output->a);
+				strcpy_s(output->a, addMod(temp1, temp2));
 			}
+			strcpy_s(currHashVals->a, addMod(output->a, currHashVals->a));
+			strcpy_s(currHashVals->b, addMod(output->b, currHashVals->b));
+			strcpy_s(currHashVals->c, addMod(output->c, currHashVals->c));
+			strcpy_s(currHashVals->d, addMod(output->d, currHashVals->d));
+			strcpy_s(currHashVals->e, addMod(output->e, currHashVals->e));
+			strcpy_s(currHashVals->f, addMod(output->f, currHashVals->f));
+			strcpy_s(currHashVals->g, addMod(output->g, currHashVals->g));
+			strcpy_s(currHashVals->h, addMod(output->h, currHashVals->h));
+			strcpy_s(output->a, currHashVals->a);
+			strcpy_s(output->b, currHashVals->b);
+			strcpy_s(output->c, currHashVals->c);
+			strcpy_s(output->d, currHashVals->d);
+			strcpy_s(output->e, currHashVals->e);
+			strcpy_s(output->f, currHashVals->f);
+			strcpy_s(output->g, currHashVals->g);
+			strcpy_s(output->h, currHashVals->h);
+			
 		}
-		cout << NOT(output->a);
 		return output;
 	}
 
-	char* hash() {
+	char* conCat(hashVals* words) {
+		char output[65];
+		sprintf_s(output, "%08X%08X%08X%08X%08X%08X%08X%08X", 
+		binToDec(words->a), binToDec(words->b), binToDec(words->c), binToDec(words->d), 
+		binToDec(words->e), binToDec(words->f), binToDec(words->g), binToDec(words->h));
+
+		output[64] = '\0';
+		return output;
+	}
+
+	void hashAlg() {
 		char** binArr = padding(strIn);
 		char*** chunks = messages(binArr);
 		hashVals* words = chunkLoop(chunks);
-		return new char[] {""};
+		hash = conCat(words);
 	}
 };
 
+
 int main()
 {
-
-	Sha256 test(new char[] {"hello world"});
+	while (true) {
+		system("CLS");
+		char* input = new char[1000];
+		cout << "Input a string:" << '\n';
+		cin.getline(input, 1000);
+		Sha256* hash = new Sha256(input);
+		cout << '\n' << "Hash: " << (string)hash->hash << '\n' << '\n';
+		system("PAUSE");
+		delete hash;
+		delete[] input;
+	}
 }
-
 
