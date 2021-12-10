@@ -275,7 +275,7 @@ public:
 		char g[33] = "00011111100000111101100110101011";
 		char h[33] = "01011011111000001100110100011001";
 	};
-
+	
 	string* roundConsts = new string[]
 	{
 		"0x428a2f98", "0x71374491", "0xb5c0fbcf", "0xe9b5dba5", "0x3956c25b", "0x59f111f1", "0x923f82a4", "0xab1c5ed5",
@@ -291,9 +291,8 @@ public:
 	~Sha256() {}
 
 protected:
-	static char** padding(char* str) {
+	static char** padding(char* str, int strSize = 0) {
 		//Gets size of string.
-		int strSize = 0;
 		while (str[strSize] != '\0') strSize++;
 
 		//Calculates size of output.
@@ -385,7 +384,7 @@ protected:
 		}
 
 		//debug
-		for (int y = 0; y < chunkNum; y++) {
+		/*for (int y = 0; y < chunkNum; y++) {
 			for (int i = 0; i < 64; i++) {
 				for (int j = 0; j < 32; j++) {
 					cout << output[y][i][j];
@@ -393,7 +392,7 @@ protected:
 				if (i % 2 == 0) cout << ' '; else cout << '\n';
 			}
 			cout << '\n';
-		}
+		}*/
 		return output;
 	}
 
@@ -451,7 +450,7 @@ protected:
 
 	char* conCat(hashVals* words) {
 		char output[65];
-		sprintf_s(output, "%08X%08X%08X%08X%08X%08X%08X%08X", 
+		sprintf_s(output, "%08x%08x%08x%08x%08x%08x%08x%08x", 
 		binToDec(words->a), binToDec(words->b), binToDec(words->c), binToDec(words->d), 
 		binToDec(words->e), binToDec(words->f), binToDec(words->g), binToDec(words->h));
 
@@ -467,19 +466,57 @@ protected:
 	}
 };
 
+void random() {
+	int leadNum = 8;
+	int strLen = 32;
+	int counter = 0;
+	int per = 0;
+	while (true) {
+		if (counter == 100) {
+			per++;
+			cout << per << '\n';
+			counter = 0;
+		}
+		//system("CLS");
+		char* input = new char[strLen + 1];
+		for (int i = 0; i < strLen; i++) {
+			input[i] = (33 + rand() % 93);
+		}
+		input[strLen] = '\0';
+		Sha256* hash = new Sha256(input);
+		for (int i = 0; i < leadNum; i++) {
+			if (hash->hash[i] != '0') break;
+			if (i == leadNum - 1) {
+				printf("Hash: %s\n", hash->hash);
+				cout << "Key: " << input << '\n';
+				system("PAUSE");
+				system("cls");
+				per = 0;
+				counter = 0;
+			}
+		}
+		counter++;
+		delete hash;
+		delete[] input;
+	}
+}
 
-int main()
-{
+void input() {
 	while (true) {
 		system("CLS");
-		char* input = new char[1000];
+		char* input = new char[10000];
 		cout << "Input a string:" << '\n';
 		cin.getline(input, 1000);
 		Sha256* hash = new Sha256(input);
-		cout << '\n' << "Hash: " << (string)hash->hash << '\n' << '\n';
+		cout << '\n' << "Hash: " << (string)hash->hash << "\n\n";
 		system("PAUSE");
 		delete hash;
 		delete[] input;
 	}
+}
+
+int main(){
+	//input();
+	random();
 }
 
